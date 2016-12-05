@@ -2,7 +2,7 @@
 
     Author: checkrein
     License: GNU GPL v3
-    
+
     Relevant API doc:
      http://new.awesomewm.org/apidoc/classes/screen.html
 
@@ -38,7 +38,6 @@ function gimp.arrange(p)
 
     -- Local access to clients in current tag
     local clients = p.clients
-    local number_clients = #clients
     -- Local access to workarea - portion of screen where clients are placed
     local workarea = p.workarea
 
@@ -52,68 +51,63 @@ function gimp.arrange(p)
     local client_x = 0
     local client_y = 0
 
-    local is_gimp = 0
-
-    -- Determine number of gimp clients
-    local gimp_count = 0
+    -- Determine client lists
+    local gimp_clients = {}
+    local non_gimp_clients = {}
     for k, client in ipairs(clients) do
         if client.role ~= nil then
             if string.match( client.role, 'gimp' ) then
-                gimp_count = gimp_count + 1
+                table.insert(gimp_clients, client)
+            else
+                table.insert(non_gimp_clients, client)
             end
         end
     end
 
-    if gimp_count == 0 then
+    if #gimp_clients == 0 then
         -- No gimp clients then use another layout
         awful.layout.suit.tile.arrange(p)
     else
-        -- Gimp clients are fixed size, all others floating
+        -- Gimp clients are fixed sizes & tiling
+        for k, client in ipairs(gimp_clients) do
 
-        -- Look at each client in the current tag
-        for k, client in ipairs(clients) do
-    
-            -- Current client's border width
-            local border = client.border_width
-    
-            is_gimp = 0
-            if client.role ~= nil then
-                if string.match( client.role, 'gimp' ) ~= '' then
-                    is_gimp = 1
-                end
-            end
-    
-            if is_gimp == 1 then
-                if client.role == 'gimp-image-window' then
-                    client_width = workarea.width - 165 - 200
-                elseif client.role == 'gimp-toolbox' then
-                    client_width = 165
-                elseif client.role == 'gimp-dock' then
-                    client_width = 201
-                end
-    
-                -- As are all next to each other
-                client_x = client_x_old + client_width_old
-    
-                -- Determine geometry for current client
-                local geo = {
-                    -- Borders are outside the client window, so sizes must compensate
-                    width = client_width - border * 2,
-                    height = client_height - border * 2,
-                    x = client_x,
-                    y = client_y
-                }
-        
-                -- Apply geometry to the current client
-                client:geometry(geo)
-        
-                -- Store client properties for next loop
-                client_width_old = client_width
-                client_x_old = client_x
-            else
-                awful.client.floating.set(client, true)
-            end
+           -- Current client's border width
+           local border = client.border_width
+
+           if client.role == 'gimp-image-window' then
+               client_width = workarea.width - 165 - 200
+           elseif client.role == 'gimp-toolbox' then
+               client_width = 165
+           elseif client.role == 'gimp-dock' then
+               client_width = 201
+           end
+
+           -- As are all next to each other
+           client_x = client_x_old + client_width_old
+
+           -- Determine geometry for current client
+           local geo = {
+               -- Borders are outside the client window, so sizes must compensate
+               width = client_width - border * 2,
+               height = client_height - border * 2,
+               x = client_x,
+               y = client_y
+           }
+
+           -- Apply geometry to the current client
+           client:geometry(geo)
+
+           -- Store client properties for next loop
+           client_width_old = client_width
+           client_x_old = client_x
         end
+
+
+        -- Non-gimp clients should float
+        for k, client in ipairs(non_gimp_clients) do
+            awful.client.floating.set(client, true)
+        end
+
     end
 end
 
