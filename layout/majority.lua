@@ -1,7 +1,7 @@
 --[[
 
     Author: checkrein
-    License: GNU GPL v2
+    License: GNU GPL v3
 
     Relevant API doc:
      http://new.awesomewm.org/apidoc/classes/screen.html
