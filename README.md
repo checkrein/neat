@@ -3,8 +3,8 @@ neat
 Awesome WM 3.5+ Layouts
 -----------------------
 
-:Author: checkrein
-:License: GNU GPL-v3
+Author: checkrein
+License: GNU GPL-v3
 
 Description
 -----------
