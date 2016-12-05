@@ -23,11 +23,8 @@
 
 
 -- Environment
-local beautiful = require("beautiful") -- Allows setting of gaps etc. in theme
 local ipairs = ipairs -- Iterator function
-local math = math -- Rounding, etc
-
-local awful = require("awful")
+local awful = require("awful") -- Client control
 
 -- layout.gimp
 local gimp = {}
@@ -40,6 +37,11 @@ function gimp.arrange(p)
     local clients = p.clients
     -- Local access to workarea - portion of screen where clients are placed
     local workarea = p.workarea
+
+    -- Gimp window widths
+    gimp_width_toolbox = 200
+    gimp_width_dock = 200
+    gimp_width_image = workarea.width - gimp_width_dock - gimp_width_toolbox
 
     -- Previous client properties
     local client_width_old = 0
@@ -66,40 +68,46 @@ function gimp.arrange(p)
 
     if #gimp_clients == 0 then
         -- No gimp clients then use another layout
-        awful.layout.suit.tile.arrange(p)
+        -- Why can't this then be adjusted using the mouse?
+        awful.layout.suit.tile.bottom.arrange(p)
     else
         -- Gimp clients are fixed sizes & tiling
         for k, client in ipairs(gimp_clients) do
 
-           -- Current client's border width
-           local border = client.border_width
+            -- Unidentified gimp windows are set as floating
+            local skip = 0
 
-           if client.role == 'gimp-image-window' then
-               client_width = workarea.width - 165 - 200
-           elseif client.role == 'gimp-toolbox' then
-               client_width = 165
-           elseif client.role == 'gimp-dock' then
-               client_width = 201
-           end
+            -- Current client's border width
+            local border = client.border_width
 
-           -- As are all next to each other
-           client_x = client_x_old + client_width_old
+            if client.role == 'gimp-image-window' then
+                client_width = gimp_width_image
+                client_x = gimp_width_toolbox + gimp_width_dock
+            elseif client.role == 'gimp-toolbox' then
+                client_width = gimp_width_toolbox
+                client_x = gimp_width_dock + border * 2
+            elseif client.role == 'gimp-dock' then
+                client_width = gimp_width_dock
+                client_x = 0
+            else
+                awful.client.floating.set(client, true)
+                skip = 1
+            end
 
-           -- Determine geometry for current client
-           local geo = {
-               -- Borders are outside the client window, so sizes must compensate
-               width = client_width - border * 2,
-               height = client_height - border * 2,
-               x = client_x,
-               y = client_y
-           }
+            if skip == 0 then
+                -- Determine geometry for current client
+                local geo = {
+                    -- Borders are outside the client window, so sizes must compensate
+                    width = client_width - border * 2,
+                    height = client_height - border * 2,
+                    x = client_x,
+                    y = client_y
+                }
+    
+                -- Apply geometry to the current client
+                client:geometry(geo)
+            end
 
-           -- Apply geometry to the current client
-           client:geometry(geo)
-
-           -- Store client properties for next loop
-           client_width_old = client_width
-           client_x_old = client_x
         end
 
 
